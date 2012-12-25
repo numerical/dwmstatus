@@ -152,7 +152,7 @@ getbattery(char *base)
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
 
-	return smprintf("%.0f", ((float)remcap / (float)descap) * 100);
+	return smprintf("%.2f", ((float)remcap / (float)descap) * 100);
 }
 /* END BATTERY USAGE
  */
@@ -280,7 +280,7 @@ main(void)
         /*net    = get_netusage();*/
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf(" Batt: %s | Load:%s | Temp: %s | %s",
+		status = smprintf(" Batt: %s% | Load:%s | Temp: %s | %s",
 				batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
