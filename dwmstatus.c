@@ -265,7 +265,7 @@ main(void)
 	char *avgs;
     char *tmchi;
     char *batt;
-    char *net;
+    /*char *net;*/
     char *temp;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
@@ -277,16 +277,16 @@ main(void)
 		avgs   = loadavg();
 		tmchi  = mktimes("Chicago: %Y/%d/%m %H:%M:%S", tzchicago);
         batt   = getbattery("/sys/class/power_supply/BAT0");
-        net    = get_netusage();
+        /*net    = get_netusage();*/
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf("wlan0: %s | Batt: %s | Load:%s | Temp: %s | %s",
-				net, batt, avgs, temp, tmchi);
+		status = smprintf(" Batt: %s | Load:%s | Temp: %s | %s",
+				batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
         free(tmchi);
         free(batt);
-        free(net);
+        /*free(net);*/
         free(temp);
 		free(status);
 	}
