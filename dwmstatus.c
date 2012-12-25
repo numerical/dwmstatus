@@ -273,9 +273,9 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(4)) {
+	for (;;sleep(9)) {
 		avgs   = loadavg();
-		tmchi  = mktimes("%Z %Y/%d/%m %H:%M:%S", tzchicago);
+		tmchi  = mktimes("Chicago: %Y/%d/%m %H:%M:%S", tzchicago);
         batt   = getbattery("/sys/class/power_supply/BAT0");
         net    = get_netusage();
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
