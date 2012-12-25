@@ -12,9 +12,7 @@
 
 #include <X11/Xlib.h>
 
-/*char *tzargentina = "America/Buenos_Aires";
-char *tzutc = "UTC";
-char *tzberlin = "Europe/Berlin";*/
+/*char *tzutc = "UTC";*/
 char *tzchicago = "America/Chicago";
 
 static Display *dpy;
@@ -93,8 +91,6 @@ loadavg(void)
 	return smprintf("%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
 }
 
-/* BATTERY USAGE
- */
 char *
 readfile(char *base, char *file)
 {
@@ -115,8 +111,7 @@ readfile(char *base, char *file)
 
 	return smprintf("%s", line);
 }
-
-/*
+/* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
  */
@@ -164,10 +159,11 @@ getbattery(char *base)
 
 /* NETWORK STUFF
  */
+int 
 parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs)
 {
 	char *buf;
-	char *eth0start;
+	char *wlan0start;
 	static int bufsize;
 	FILE *devfd;
 
@@ -180,10 +176,10 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 	fgets(buf, bufsize, devfd);
 
 	while (fgets(buf, bufsize, devfd)) {
-	    if ((eth0start = strstr(buf, "eth0:")) != NULL) {
+	    if ((wlan0start = strstr(buf, "wlan0:")) != NULL) {
 
 		// With thanks to the conky project at http://conky.sourceforge.net/
-		sscanf(eth0start + 6, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
+		sscanf(wlan0start + 6, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
 		       receivedabs, sentabs);
 		fclose(devfd);
 		free(buf);
@@ -236,7 +232,7 @@ get_netusage()
 	} else {
 	    sprintf(upspeedstr, "%.2f KB/s", upspeed);
 	}
-	sprintf(retstr, "down: %s up: %s", downspeedstr, upspeedstr);
+	sprintf(retstr, "d: %s u: %s", downspeedstr, upspeedstr);
 
 	free(downspeedstr);
 	free(upspeedstr);
@@ -245,43 +241,53 @@ get_netusage()
 
 /* END NETWORK STUFF
  */
+/* Temp stuff
+ * gettemperature("/sys/class/hwmon/hwmon0/device", "temp1_input");
+ */
+char *
+gettemperature(char *base, char *sensor)
+{
+    char *co;
+
+    co = readfile(base, sensor);
+    if (co == NULL)
+        return smprintf("");
+    return smprintf("%02.0f°C", atof(co) / 1000);
+}
+/* END TEMP STUFF
+ */
+
 
 int
 main(void)
 {
 	char *status;
 	char *avgs;
-	/*char *tmar;
-	char *tmutc;
-	char *tmbln;*/
     char *tmchi;
     char *batt;
     char *net;
+    char *temp;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
 		return 1;
 	}
 
-	for (;;sleep(90)) {
-		avgs = loadavg();
-		/*tmar = mktimes("%H:%M", tzargentina);
-		tmutc = mktimes("%H:%M", tzutc);
-		tmbln = mktimes("KW %W %a %d %b %H:%M %Z %Y", tzberlin);*/
-		tmchi = mktimes("%H:%M", tzchicago);
-        batt  = getbattery("/sys/class/power_supply/BAT0");
-        net   = get_netusage();
+	for (;;sleep(4)) {
+		avgs   = loadavg();
+		tmchi  = mktimes("%Z %Y/%d/%m %H:%M:%S", tzchicago);
+        batt   = getbattery("/sys/class/power_supply/BAT0");
+        net    = get_netusage();
+        temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf("Network: %s | Batt: %s | Load:%s | %s",
-				net, batt, avgs, /*tmar, tmutc, tmbln*/ tmchi);
+		status = smprintf("wlan0: %s | Batt: %s | Load:%s | Temp: %s | %s",
+				net, batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
-		/*free(tmar);
-		free(tmutc);
-		free(tmbln);*/
         free(tmchi);
         free(batt);
         free(net);
+        free(temp);
 		free(status);
 	}
 
