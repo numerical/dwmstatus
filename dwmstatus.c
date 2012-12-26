@@ -257,6 +257,35 @@ gettemperature(char *base, char *sensor)
 /* END TEMP STUFF
  */
 
+int runevery(time_t *ltime, int sec) 
+{
+    /* return 1 if 'sec' elapsed since last run
+     * else return 0
+     */
+    time_t now = time(NULL);
+
+    if (difftime(now, *ltime) >= sec) {
+        *ltime = now;
+        return(1);
+    }
+    else
+        return(0);
+}
+
+char *
+get_freespace(char *mntpt)
+{
+    struct stavfs data;
+    double total, used = 0;
+    if ((statvfs(mntpt, &data)) < 0) {
+        fprintf(stderr, "can't get info on disk.\n");
+        return("?");
+    }
+    total = (data.f_blocks * data.f_frsize);
+    used  = (data.f_blocks - data.f_bfree) * data.f_frsize;
+    return smrpintf("%.1f", (used/total) * 100);
+}
+
 
 int
 main(void)
@@ -267,28 +296,52 @@ main(void)
     char *batt;
     char *net;
     char *temp;
+    char *rootfs;
+    char *homefs;
+    time_t count5min = 0;
+    time_t count1min = 0;
+    time_t count10sec = 0;
+/*    time_t count5sec = 0;*/
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
 		return 1;
 	}
 
-	for (;;sleep(9)) {
-		avgs   = loadavg();
-		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
-        batt   = getbattery("/sys/class/power_supply/BAT0");
-        net    = get_netusage();
-        temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
+	for (;;sleep(1)) {
+        /* checks every 5 minutes */
+        if (runevery(&count5min, 300)) {
+            free(homefs);
+            free(rootfs);
 
-		status = smprintf("wlan0: %s | Batt: %s% | Load: [%s] | Temp: %s | %s",
-				net, batt, avgs, temp, tmchi);
-		setstatus(status);
-		free(avgs);
-        free(tmchi);
-        free(batt);
-        free(net);
-        free(temp);
+            homefs = get_freespace("/home");
+            rootfs = get_freespace("/");
+        }
+        /* checks every minute */
+        if (runevery(&count1min, 60)) {
+            free(tmchi);
+            
+            avgs   = loadavg();
+		    tmchi  = mktimes("%H:%M", tzchicago);
+        }
+        /* checks every 10 seconds */
+        if (runevery(&count10sec, 10)) {
+            free(avgs);
+            free(temp);
+		    
+            avgs   = loadavg();
+            temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
+        }
+        /* checks every 5 seconds */
+        /* NONE */
+        free(net)
 		free(status);
+            
+        net    = get_netusage();
+
+		status = smprintf(" / %s% | /home %s% | wlan0: %s | Batt: %s% | Load: [%s] | Temp: %s | %s",
+				rootfs, homefs, net, batt, avgs, temp, tmchi);
+		setstatus(status);
 	}
 
 	XCloseDisplay(dpy);
