@@ -118,22 +118,28 @@ readfile(char *base, char *file)
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
  * DONE Add in time till empty (see i3status for help)
- * TODO Add in remaining charge time
+ * DONT Add in remaining charge time
  */
+
 char *
 getbattery(char *base)
 {
 	char *co;
+    char *stat;
+    char status;
 	int descap, remcap;
-    float temp;
+    float remaining;
     float using;
     float energy;
+    float energy_full;
 
 	descap = -1;
 	remcap = -1;
     energy = -1;
+    energy_full = -1;
     using  = -1;
-    temp   = -1;
+    remaining = -1;
+    stat = "Not Present";
 
 	co = readfile(base, "present");
 	if (co == NULL || co[0] != '1') {
@@ -141,6 +147,10 @@ getbattery(char *base)
 		return smprintf("not present");
 	}
 	free(co);
+
+    co = readfile(base, "status");
+    sscanf(co, "%s", &status);
+    free(co);
 
 	co = readfile(base, "charge_full_design");
 	if (co == NULL) {
@@ -172,21 +182,26 @@ getbattery(char *base)
 		return smprintf("invalid");
 
     /* Getting time remaining */
-    temp = (energy / using);
+    /* First check the battery status */
+    if (status == *("Discharging")) {
+        remaining = energy / using;
+        stat = "Batt";
+    } else if (status == *("Charging")) {
+        remaining = (energy_full - energy) /using;
+        stat = "Char";
+    } else {
+        remaining = 0;
+        stat = "Full";
+    }
     /* convert to hour:min:sec */
     int hours, seconds, minutes, secs_rem;
-    
-    secs_rem = (int)(temp * 3600.0);
-
+    secs_rem = (int)(remaining * 3600.0);
     hours = secs_rem / 3600;
-    
     seconds = secs_rem - (hours * 3600);
-    
     minutes = seconds / 60;
-    
     seconds -= (minutes *60);
 
-	return smprintf("%.2f %02d:%02d:%02d", (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+	return smprintf("%s: %.2f %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
            /*max(hours, 0), max(minutes, 0), max(seconds, 0));*/
 }
 /* END BATTERY USAGE
@@ -315,7 +330,7 @@ main(void)
         net    = get_netusage();
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf("wlan0: %s | Batt: %s | Load: [%s] | Temp: %s | %s",
+		status = smprintf("wlan0: %s | %s | Load: [%s] | Temp: %s | %s",
 				net, batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
