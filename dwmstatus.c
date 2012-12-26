@@ -275,12 +275,12 @@ main(void)
 
 	for (;;sleep(9)) {
 		avgs   = loadavg();
-		tmchi  = mktimes("Chicago: %Y/%d/%m %H:%M:%S", tzchicago);
+		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
         batt   = getbattery("/sys/class/power_supply/BAT0");
         net    = get_netusage();
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf("wlan0: %s | Batt: %s% | Load:%s | Temp: %s | %s",
+		status = smprintf("wlan0: %s | Batt: %s% | Load: [%s] | Temp: %s | %s",
 				net, batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
