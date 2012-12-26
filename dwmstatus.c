@@ -12,6 +12,9 @@
 
 #include <X11/Xlib.h>
 
+#include <stdbool.h>
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
 /*char *tzutc = "UTC";*/
 char *tzchicago = "America/Chicago";
 
@@ -114,15 +117,29 @@ readfile(char *base, char *file)
 /* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
+ * DONE Add in time till empty (see i3status for help)
+ * DONT Add in remaining charge time
  */
+
 char *
 getbattery(char *base)
 {
 	char *co;
+    char *stat;
+    char status;
 	int descap, remcap;
+    float remaining;
+    float using;
+    float energy;
+    float energy_full;
 
 	descap = -1;
 	remcap = -1;
+    energy = -1;
+    energy_full = -1;
+    using  = -1;
+    remaining = -1;
+    stat = "Not Present";
 
 	co = readfile(base, "present");
 	if (co == NULL || co[0] != '1') {
@@ -130,6 +147,10 @@ getbattery(char *base)
 		return smprintf("not present");
 	}
 	free(co);
+
+    co = readfile(base, "status");
+    sscanf(co, "%s", &status);
+    free(co);
 
 	co = readfile(base, "charge_full_design");
 	if (co == NULL) {
@@ -149,10 +170,39 @@ getbattery(char *base)
 	sscanf(co, "%d", &remcap);
 	free(co);
 
+    co = readfile(base, "power_now"); /* µWattage being used */
+    sscanf(co, "%f", &using);
+    free(co);
+
+    co = readfile(base, "energy_now"); /* µWatts stored */
+    sscanf(co, "%f", &energy);
+    free(co);
+
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
 
-	return smprintf("%.2f", ((float)remcap / (float)descap) * 100);
+    /* Getting time remaining */
+    /* First check the battery status */
+    if (status == *("Discharging")) {
+        remaining = energy / using;
+        stat = "Batt";
+    } else if (status == *("Charging")) {
+        remaining = (energy_full - energy) /using;
+        stat = "Char";
+    } else {
+        remaining = 0;
+        stat = "Full";
+    }
+    /* convert to hour:min:sec */
+    int hours, seconds, minutes, secs_rem;
+    secs_rem = (int)(remaining * 3600.0);
+    hours = secs_rem / 3600;
+    seconds = secs_rem - (hours * 3600);
+    minutes = seconds / 60;
+    seconds -= (minutes *60);
+
+	return smprintf("%s: %.2f %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+           /*max(hours, 0), max(minutes, 0), max(seconds, 0));*/
 }
 /* END BATTERY USAGE
  */
@@ -308,39 +358,14 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(1)) {
-        /* checks every 5 minutes */
-        if (runevery(&count5min, 300)) {
-            free(homefs);
-            free(rootfs);
-
-            homefs = get_freespace("/home");
-            rootfs = get_freespace("/");
-        }
-        /* checks every minute */
-        if (runevery(&count1min, 60)) {
-            free(tmchi);
-            
-            avgs   = loadavg();
-		    tmchi  = mktimes("%H:%M", tzchicago);
-        }
-        /* checks every 10 seconds */
-        if (runevery(&count10sec, 10)) {
-            free(avgs);
-            free(temp);
-		    
-            avgs   = loadavg();
-            temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
-        }
-        /* checks every 5 seconds */
-        /* NONE */
-        free(net)
-		free(status);
-            
+	for (;;sleep(4)) {
+		avgs   = loadavg();
+		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
+        batt   = getbattery("/sys/class/power_supply/BAT0");
         net    = get_netusage();
 
-		status = smprintf(" / %s% | /home %s% | wlan0: %s | Batt: %s% | Load: [%s] | Temp: %s | %s",
-				rootfs, homefs, net, batt, avgs, temp, tmchi);
+		status = smprintf("wlan0: %s | %s | Load: [%s] | Temp: %s | %s",
+				net, batt, avgs, temp, tmchi);
 		setstatus(status);
 	}
 
