@@ -114,6 +114,7 @@ readfile(char *base, char *file)
 /* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
+ * TODO Add in time till empty (see i3status for help)
  */
 char *
 getbattery(char *base)
@@ -273,7 +274,7 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(9)) {
+	for (;;sleep(4)) {
 		avgs   = loadavg();
 		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
         batt   = getbattery("/sys/class/power_supply/BAT0");
