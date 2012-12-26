@@ -131,12 +131,10 @@ getbattery(char *base)
     float remaining;
     float using;
     float energy;
-    float energy_full;
 
 	descap = -1;
 	remcap = -1;
     energy = -1;
-    energy_full = -1;
     using  = -1;
     remaining = -1;
     stat = "Not Present";
@@ -187,7 +185,7 @@ getbattery(char *base)
         remaining = energy / using;
         stat = "Batt";
     } else if (status == *("Charging")) {
-        remaining = (energy_full - energy) /using;
+        remaining = ((float)descap - energy) /using;
         stat = "Char";
     } else {
         remaining = 0;
@@ -307,35 +305,6 @@ gettemperature(char *base, char *sensor)
 /* END TEMP STUFF
  */
 
-int runevery(time_t *ltime, int sec) 
-{
-    /* return 1 if 'sec' elapsed since last run
-     * else return 0
-     */
-    time_t now = time(NULL);
-
-    if (difftime(now, *ltime) >= sec) {
-        *ltime = now;
-        return(1);
-    }
-    else
-        return(0);
-}
-
-char *
-get_freespace(char *mntpt)
-{
-    struct stavfs data;
-    double total, used = 0;
-    if ((statvfs(mntpt, &data)) < 0) {
-        fprintf(stderr, "can't get info on disk.\n");
-        return("?");
-    }
-    total = (data.f_blocks * data.f_frsize);
-    used  = (data.f_blocks - data.f_bfree) * data.f_frsize;
-    return smrpintf("%.1f", (used/total) * 100);
-}
-
 
 int
 main(void)
@@ -346,11 +315,6 @@ main(void)
     char *batt;
     char *net;
     char *temp;
-    char *rootfs;
-    char *homefs;
-    time_t count5min = 0;
-    time_t count1min = 0;
-    time_t count10sec = 0;
 /*    time_t count5sec = 0;*/
 
 	if (!(dpy = XOpenDisplay(NULL))) {
@@ -363,6 +327,7 @@ main(void)
 		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
         batt   = getbattery("/sys/class/power_supply/BAT0");
         net    = get_netusage();
+        temp   = gettemperature("/sys/devices/platform/coretemp.0", "temp1_input");
 
 		status = smprintf("wlan0: %s | %s | Load: [%s] | Temp: %s | %s",
 				net, batt, avgs, temp, tmchi);
