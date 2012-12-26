@@ -12,6 +12,9 @@
 
 #include <X11/Xlib.h>
 
+#include <stdbool.h>
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
 /*char *tzutc = "UTC";*/
 char *tzchicago = "America/Chicago";
 
@@ -114,16 +117,23 @@ readfile(char *base, char *file)
 /* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
- * TODO Add in time till empty (see i3status for help)
+ * DONE Add in time till empty (see i3status for help)
+ * TODO Add in remaining charge time
  */
 char *
 getbattery(char *base)
 {
 	char *co;
 	int descap, remcap;
+    float temp;
+    float using;
+    float energy;
 
 	descap = -1;
 	remcap = -1;
+    energy = -1;
+    using  = -1;
+    temp   = -1;
 
 	co = readfile(base, "present");
 	if (co == NULL || co[0] != '1') {
@@ -150,10 +160,34 @@ getbattery(char *base)
 	sscanf(co, "%d", &remcap);
 	free(co);
 
+    co = readfile(base, "power_now"); /* µWattage being used */
+    sscanf(co, "%f", &using);
+    free(co);
+
+    co = readfile(base, "energy_now"); /* µWatts stored */
+    sscanf(co, "%f", &energy);
+    free(co);
+
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
 
-	return smprintf("%.2f", ((float)remcap / (float)descap) * 100);
+    /* Getting time remaining */
+    temp = (energy / using);
+    /* convert to hour:min:sec */
+    int hours, seconds, minutes, secs_rem;
+    
+    secs_rem = (int)(temp * 3600.0);
+
+    hours = secs_rem / 3600;
+    
+    seconds = secs_rem - (hours * 3600);
+    
+    minutes = seconds / 60;
+    
+    seconds -= (minutes *60);
+
+	return smprintf("%.2f %02d:%02d:%02d", (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+           /*max(hours, 0), max(minutes, 0), max(seconds, 0));*/
 }
 /* END BATTERY USAGE
  */
@@ -281,7 +315,7 @@ main(void)
         net    = get_netusage();
         temp   = gettemperature("/sys/devices/platform/coretemp.0/", "temp1_input");
 
-		status = smprintf("wlan0: %s | Batt: %s% | Load: [%s] | Temp: %s | %s",
+		status = smprintf("wlan0: %s | Batt: %s | Load: [%s] | Temp: %s | %s",
 				net, batt, avgs, temp, tmchi);
 		setstatus(status);
 		free(avgs);
