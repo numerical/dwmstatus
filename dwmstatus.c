@@ -8,12 +8,10 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <sys/wait.h>
 
 #include <X11/Xlib.h>
-
-#include <stdbool.h>
-#define max(a, b) ((a) > (b) ? (a) : (b))
 
 /*char *tzutc = "UTC";*/
 char *tzchicago = "America/Chicago";
@@ -199,13 +197,15 @@ getbattery(char *base)
     minutes = seconds / 60;
     seconds -= (minutes *60);
 
-	return smprintf("%s: %.2f %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+	return smprintf("%s: %.2f%s %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), "%", hours, minutes, seconds);
            /*max(hours, 0), max(minutes, 0), max(seconds, 0));*/
 }
 /* END BATTERY USAGE
  */
 
 /* NETWORK STUFF
+ * TODO ip address
+ * TODO connection status
  */
 int 
 parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs)
@@ -305,32 +305,55 @@ gettemperature(char *base, char *sensor)
 /* END TEMP STUFF
  */
 
+int runevery(time_t *ltime, int sec) 
+{
+    time_t now = time(NULL);
+
+    if (difftime(now, *ltime) >= sec) {
+        *ltime = now;
+        return(1);
+    }
+    else
+        return(0);
+}
 
 int
 main(void)
 {
-	char *status;
-	char *avgs;
-    char *tmchi;
-    char *batt;
-    char *net;
-    char *temp;
-/*    time_t count5sec = 0;*/
+	char *status = NULL;
+	char *avgs = NULL;
+    char *tmchi = NULL;
+    char *batt = NULL;
+    char *net = NULL;
+    char *temp = NULL;
+    time_t count60 = 0;
+    time_t count10 = 0;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
 		return 1;
 	}
 
-	for (;;sleep(4)) {
-		avgs   = loadavg();
-		tmchi  = mktimes("%Y/%d/%m %H:%M:%S", tzchicago);
-        batt   = getbattery("/sys/class/power_supply/BAT0");
+	for (;;sleep(1)) {
+        if (runevery(&count60, 60)) {
+            free(tmchi);
+
+		    tmchi  = mktimes("%Y/%d/%m %H:%M", tzchicago);
+        }
+        if (runevery(&count10, 10)) {
+            free(avgs);
+            free(batt);
+            free(temp);
+
+		    avgs   = loadavg();
+            batt   = getbattery("/sys/class/power_supply/BAT0");
+            temp   = gettemperature("/sys/devices/platform/coretemp.0", "temp1_input");
+        }
         net    = get_netusage();
-        temp   = gettemperature("/sys/devices/platform/coretemp.0", "temp1_input");
 
 		status = smprintf("wlan0: %s | %s | Load: [%s] | Temp: %s | %s",
 				net, batt, avgs, temp, tmchi);
+        free(net);
 		setstatus(status);
 	}
 
