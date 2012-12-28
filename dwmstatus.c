@@ -11,6 +11,15 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
+/* i3 */
+#include <stdbool.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+/* end i3 */
 #include <X11/Xlib.h>
 
 /*char *tzutc = "UTC";*/
@@ -202,8 +211,8 @@ getbattery(char *base)
 /* END BATTERY USAGE
  *
  * NETWORK STUFF
- * TODO ip address display (need new func, not in net/dev)
- * TODO connection status (Put in ip address func?)
+ * DONE ip address display (need new func, not in net/dev)
+ * TODO KINDA DONE: connection status (Put in ip address func?)
  * DONE make more modular (for use with wlan0/eth0/others)
  */
 int 
@@ -286,6 +295,57 @@ get_netusage(char *netdevice)
 	return retstr;
 }
 
+/* All taken from i3status. Credit should not go to me...I am still learning
+ * and this was all pretty shamelessly copy/pasted from i3status/src/print_ip_addr.c
+ */
+char *
+get_ip_addr(const char *interface)
+{
+    static char part[512];
+    socklen_t len = sizeof(struct sockaddr_in);
+    memset(part, 0, sizeof(part));
+    struct ifaddrs *ifaddr, *addrp;
+    bool found = false;
+
+    getifaddrs(&ifaddr);
+
+    if (ifaddr == NULL)
+        return NULL;
+
+    /* Skip till we are at the AF_INET address of the interface */
+    for (addrp = ifaddr;
+            (addrp != NULL &&
+             (strcmp(addrp->ifa_name, interface) != 0 ||
+              addrp->ifa_addr == NULL ||
+              addrp->ifa_addr->sa_family != AF_INET));
+            addrp = addrp->ifa_next) {
+        /* check if interface is down/up */
+        if (strcmp(addrp->ifa_name, interface) != 0)
+            continue;
+        found = true;
+        if (strcmp(addrp->ifa_name, interface) != 0) {
+            freeifaddrs(ifaddr);
+            return NULL;
+        }
+    }
+
+    if (addrp == NULL) {
+        freeifaddrs(ifaddr);
+        return (found ? "no IP" : NULL);
+    }
+
+    int ret;
+    if ((ret = getnameinfo(addrp->ifa_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
+        fprintf(stderr, "dwmstatus: getnameinfo(): %s\n", gai_strerror(ret));
+        freeifaddrs(ifaddr);
+        return "no IP";
+    }
+    freeifaddrs(ifaddr);
+    return part;
+}
+
+
+
 /* END NETWORK STUFF
  *
  * Temp stuff
@@ -325,6 +385,7 @@ main(void)
     char *batt = NULL;
     char *net = NULL;
     char *temp = NULL;
+    char *ipaddr = NULL;
     time_t count60 = 0;
     time_t count10 = 0;
 
@@ -336,8 +397,10 @@ main(void)
 	for (;;sleep(1)) {
         if (runevery(&count60, 60)) {
             free(tmchi);
+            free(ipaddr);
 
 		    tmchi  = mktimes("%Y/%d/%m %H:%M", tzchicago);
+            ipaddr = get_ip_addr("wlan0");
         }
         if (runevery(&count10, 10)) {
             free(avgs);
@@ -350,8 +413,8 @@ main(void)
         }
         net    = get_netusage("wlan0");
 
-		status = smprintf("%s | %s | [%s] | T: %s | %s",
-				net, batt, avgs, temp, tmchi);
+		status = smprintf("%s %s | %s | [%s] | T: %s | %s",
+				net, ipaddr, batt, avgs, temp, tmchi);
         free(net);
 		setstatus(status);
 	}
