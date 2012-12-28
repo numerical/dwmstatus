@@ -197,8 +197,7 @@ getbattery(char *base)
     minutes = seconds / 60;
     seconds -= (minutes *60);
 
-	return smprintf("%s: %.2f%s %02d:%02d:%02d", \
-           stat, (((float)remcap / (float)descap) * 100), "%", hours, minutes, seconds);
+	return smprintf("%s: %.2f%s %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), "%", hours, minutes, seconds);
 }
 /* END BATTERY USAGE
  *
