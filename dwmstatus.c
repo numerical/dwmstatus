@@ -413,7 +413,7 @@ main(void)
         }
         net    = get_netusage("wlan0");
 
-		status = smprintf("%s %s | %s | [%s] | T: %s | %s",
+		status = smprintf("%s [%s] | %s | [%s] | T: %s | %s",
 				net, ipaddr, batt, avgs, temp, tmchi);
         free(net);
 		setstatus(status);
