@@ -197,21 +197,21 @@ getbattery(char *base)
     minutes = seconds / 60;
     seconds -= (minutes *60);
 
-	return smprintf("%s: %.2f%s %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), "%", hours, minutes, seconds);
-           /*max(hours, 0), max(minutes, 0), max(seconds, 0));*/
+	return smprintf("%s: %.2f%s %02d:%02d:%02d",
+           stat, (((float)remcap / (float)descap) * 100), "%", hours, minutes, seconds);
 }
 /* END BATTERY USAGE
- */
-
-/* NETWORK STUFF
- * TODO ip address
- * TODO connection status
+ *
+ * NETWORK STUFF
+ * TODO ip address display (need new func, not in net/dev)
+ * TODO connection status (Put in ip address func?)
+ * DONE make more modular (for use with wlan0/eth0/others)
  */
 int 
-parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs)
+parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs, char *netdevice)
 {
 	char *buf;
-	char *wlan0start;
+    char *netstart;
 	static int bufsize;
 	FILE *devfd;
 
@@ -219,15 +219,15 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 	bufsize = 255;
 	devfd = fopen("/proc/net/dev", "r");
 
-	// ignore the first two lines of the file
+	/* ignore the first two lines of the file */
 	fgets(buf, bufsize, devfd);
 	fgets(buf, bufsize, devfd);
 
 	while (fgets(buf, bufsize, devfd)) {
-	    if ((wlan0start = strstr(buf, "wlan0:")) != NULL) {
+	    if ((netstart = strstr(buf, netdevice)) != NULL) {
 
-		// With thanks to the conky project at http://conky.sourceforge.net/
-		sscanf(wlan0start + 6, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
+		/* With thanks to the conky project at http://conky.sourceforge.net/ */
+		sscanf(netstart + 6, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
 		       receivedabs, sentabs);
 		fclose(devfd);
 		free(buf);
@@ -240,7 +240,7 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 }
 
 char *
-get_netusage()
+get_netusage(char *netdevice)
 {
 	unsigned long long int oldrec, oldsent, newrec, newsent;
 	double downspeed, upspeed;
@@ -252,14 +252,14 @@ get_netusage()
 	upspeedstr = (char *) malloc(15);
 	retstr = (char *) malloc(42);
 
-	retval = parse_netdev(&oldrec, &oldsent);
+	retval = parse_netdev(&oldrec, &oldsent, netdevice);
 	if (retval) {
 	    fprintf(stdout, "Error when parsing /proc/net/dev file.\n");
 	    exit(1);
 	}
 
 	sleep(1);
-	retval = parse_netdev(&newrec, &newsent);
+	retval = parse_netdev(&newrec, &newsent, netdevice);
 	if (retval) {
 	    fprintf(stdout, "Error when parsing /proc/net/dev file.\n");
 	    exit(1);
@@ -280,7 +280,7 @@ get_netusage()
 	} else {
 	    sprintf(upspeedstr, "%.2f KB/s", upspeed);
 	}
-	sprintf(retstr, "d: %s u: %s", downspeedstr, upspeedstr);
+	sprintf(retstr, "%s: d: %s u: %s", netdevice, downspeedstr, upspeedstr);
 
 	free(downspeedstr);
 	free(upspeedstr);
@@ -288,8 +288,8 @@ get_netusage()
 }
 
 /* END NETWORK STUFF
- */
-/* Temp stuff
+ *
+ * Temp stuff
  * gettemperature("/sys/class/hwmon/hwmon0/device", "temp1_input");
  */
 char *
@@ -349,9 +349,9 @@ main(void)
             batt   = getbattery("/sys/class/power_supply/BAT0");
             temp   = gettemperature("/sys/devices/platform/coretemp.0", "temp1_input");
         }
-        net    = get_netusage();
+        net    = get_netusage("wlan0");
 
-		status = smprintf("wlan0: %s | %s | Load: [%s] | Temp: %s | %s",
+		status = smprintf("%s | %s | [%s] | T: %s | %s",
 				net, batt, avgs, temp, tmchi);
         free(net);
 		setstatus(status);
