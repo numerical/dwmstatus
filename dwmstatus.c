@@ -202,8 +202,8 @@ getbattery(char *base)
 /* END BATTERY USAGE
  *
  * NETWORK STUFF
- * DONE ip address display (need new func, not in net/dev)
- * TODO KINDA DONE: connection status (Put in ip address func?)
+ * TODO ip address display (need new func, not in net/dev)
+ * TODO connection status (Put in ip address func?)
  * DONE make more modular (for use with wlan0/eth0/others)
  */
 int 
