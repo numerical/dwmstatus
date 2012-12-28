@@ -325,7 +325,6 @@ main(void)
     char *batt = NULL;
     char *net = NULL;
     char *temp = NULL;
-    char *ipaddr = NULL;
     time_t count60 = 0;
     time_t count10 = 0;
 
@@ -337,10 +336,8 @@ main(void)
 	for (;;sleep(1)) {
         if (runevery(&count60, 60)) {
             free(tmchi);
-            free(ipaddr);
 
 		    tmchi  = mktimes("%Y/%d/%m %H:%M", tzchicago);
-            ipaddr = get_ip_addr("wlan0");
         }
         if (runevery(&count10, 10)) {
             free(avgs);
