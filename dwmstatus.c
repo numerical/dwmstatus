@@ -128,11 +128,11 @@ getbattery(char *base)
 	int descap, remcap;
     float remaining;
     float using;
-    float energy;
+    float voltage;
+    float current;
 
 	descap = -1;
 	remcap = -1;
-    energy = -1;
     using  = -1;
     remaining = -1;
     stat = "Not Present";
@@ -167,12 +167,25 @@ getbattery(char *base)
 	free(co);
 
     co = readfile(base, "power_now"); /* µWattage being used */
-    sscanf(co, "%f", &using);
+    if (co == NULL) {
+        co = readfile(base, "voltage_now");
+        sscanf(co, "%f", &voltage);
+        free(co);
+        co = readfile(base, "current_now");
+        sscanf(co, "%f", &current);
+        /* Remaining */
+        remcap  = (voltage / 1000.0) * ((float)remcap / 1000.0);
+        /* full design */
+        descap  = (voltage / 1000.0) * ((float)descap / 1000.0);
+        /* present rate */
+        using = (voltage / 1000.0) * ((float)current / 1000.0);
+        if (co == NULL)
+            return smprintf("");
+    }
+    else
+        sscanf(co, "%f", &using);
     free(co);
 
-    co = readfile(base, "energy_now"); /* µWatts stored */
-    sscanf(co, "%f", &energy);
-    free(co);
 
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
@@ -180,10 +193,10 @@ getbattery(char *base)
     /* Getting time remaining */
     /* First check the battery status */
     if (status == *("Discharging")) {
-        remaining = energy / using;
+        remaining = (float)remcap / using;
         stat = "Batt";
     } else if (status == *("Charging")) {
-        remaining = ((float)descap - energy) /using;
+        remaining = ((float)descap - (float)remcap) /using;
         stat = "Char";
     } else {
         remaining = 0;
