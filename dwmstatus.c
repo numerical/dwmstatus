@@ -13,8 +13,22 @@
 
 #include <X11/Xlib.h>
 
-/*char *tzutc = "UTC";*/
-char *tzchicago = "America/Chicago";
+/************************
+ * Configuration Options
+ ************************/
+
+/* Specify your timezone: */
+#define TIMEZONE "America/Chicago"
+
+/* Specify network device, usually wlan0 or eth0 */
+#define NET_DEVICE "wlan0"
+
+/* Specity path to your battery */
+#define BATT_PATH "/sys/class/power_supply/BAT0"
+
+/* Specify your temperature sensor information. */
+#define TEMP_SENSOR_PATH "/sys/devices/platform/coretemp.0"
+#define TEMP_SENSOR_UNIT "temp1_input"
 
 static Display *dpy;
 
@@ -334,7 +348,7 @@ main(void)
 {
 	char *status = NULL;
 	char *avgs = NULL;
-    char *tmchi = NULL;
+    char *time = NULL;
     char *batt = NULL;
     char *net = NULL;
     char *temp = NULL;
@@ -348,9 +362,9 @@ main(void)
 
 	for (;;sleep(1)) {
         if (runevery(&count60, 60)) {
-            free(tmchi);
+            free(time);
 
-		    tmchi  = mktimes("%Y/%d/%m %H:%M", tzchicago);
+		    time  = mktimes("%Y/%d/%m %H:%M", TIMEZONE);
         }
         if (runevery(&count10, 10)) {
             free(avgs);
@@ -358,13 +372,13 @@ main(void)
             free(temp);
 
 		    avgs   = loadavg();
-            batt   = getbattery("/sys/class/power_supply/BAT0");
-            temp   = gettemperature("/sys/devices/platform/coretemp.0", "temp1_input");
+            batt   = getbattery(BATT_PATH);
+            temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
         }
-        net    = get_netusage("wlan0");
+        net    = get_netusage(NET_DEVICE);
 
 		status = smprintf("%s | %s | [%s] | T: %s | %s",
-				net, batt, avgs, temp, tmchi);
+				net, batt, avgs, temp, time);
         free(net);
 		setstatus(status);
 	}
