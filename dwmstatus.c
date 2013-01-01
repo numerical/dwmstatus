@@ -129,8 +129,6 @@ readfile(char *base, char *file)
 /* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
- * DONE Add in time till empty (see i3status for help)
- * DONT Add in remaining charge time
  */
 
 char *
@@ -205,7 +203,6 @@ getbattery(char *base)
 		return smprintf("invalid");
 
     /* Getting time remaining */
-    /* First check the battery status */
     if (status == *("Discharging")) {
         remaining = (float)remcap / using;
         stat = "Batt";
@@ -231,7 +228,6 @@ getbattery(char *base)
  * NETWORK STUFF
  * TODO ip address display (need new func, not in net/dev)
  * TODO connection status (Put in ip address func?)
- * DONE make more modular (for use with wlan0/eth0/others)
  */
 int 
 parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs, char *netdevice)
@@ -315,8 +311,7 @@ get_netusage(char *netdevice)
 
 /* END NETWORK STUFF
  *
- * Temp stuff
- * gettemperature("/sys/class/hwmon/hwmon0/device", "temp1_input");
+ * TEMPERATURE STUFF
  */
 char *
 gettemperature(char *base, char *sensor)
@@ -343,6 +338,7 @@ int runevery(time_t *ltime, int sec)
         return(0);
 }
 
+
 int
 main(void)
 {
@@ -361,11 +357,13 @@ main(void)
 	}
 
 	for (;;sleep(1)) {
+        /* Update every minute */
         if (runevery(&count60, 60)) {
             free(time);
 
 		    time  = mktimes("%Y/%d/%m %H:%M", TIMEZONE);
         }
+        /* Update every 10 seconds */
         if (runevery(&count10, 10)) {
             free(avgs);
             free(batt);
@@ -375,8 +373,10 @@ main(void)
             batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
         }
+        /* Update every second */
         net    = get_netusage(NET_DEVICE);
 
+        /* Format of display */
 		status = smprintf("%s | %s | [%s] | T: %s | %s",
 				net, batt, avgs, temp, time);
         free(net);
