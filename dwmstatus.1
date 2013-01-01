@@ -1,0 +1,34 @@
+.TH DWMSTATUS 1 dwmstatus\-VERSION
+.SH NAME
+dwmstatus \- simple status bar for dwm
+.SH SYNOPSIS
+.B dwmstatus
+.SH DESCRIPTION
+dwmstatus is a simple, small status bar for dwm. Unlike large, complex shell
+scripts, this status bar tries to stay clean and concise, has no configuration
+file, and must be recompiled to change settings, similar to dwm. 
+.P
+The default setup has 5 sections (from left to right): network usage, battery
+status, computer load, temperature, and time. These are separated by pipes, and
+read to the specific files in the #defines at the top of the dwmstatus.c file.
+.P
+To edit this status bar, you must change the #defines to match where your
+system information is located and recompile.
+.SH OPTIONS
+.TP
+.B None so far.
+.SH USAGE
+.TP
+Run dwbstatus in a shell and it will put its output into the dwm status bar
+area (the right side of the bar by default).
+.SH SEE ALSO
+.BR dwm (1)
+.SH AUTHORS
+.B Original author: 
+Christoph Lohmann
+.P
+.B Shitty hacks: 
+William Giokas, mostly taken from dwmstatus website patches
+.SH BUGS AND DEVELOPMENT
+Please report any and all bugs and track development at
+.B https://bitbucket.org/KaiSforza/dwmstatus
