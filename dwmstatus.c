@@ -361,7 +361,7 @@ main(void)
         if (runevery(&count60, 60)) {
             free(time);
 
-		    time  = mktimes("%Y/%d/%m %H:%M", TIMEZONE);
+		    time  = mktimes("%Y/%m/%d %H:%M", TIMEZONE);
         }
         /* Update every 10 seconds */
         if (runevery(&count10, 10)) {
