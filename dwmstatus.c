@@ -126,6 +126,19 @@ readfile(char *base, char *file)
 
 	return smprintf("%s", line);
 }
+
+int runevery(time_t *ltime, int sec)
+{
+    time_t now = time(NULL);
+
+    if (difftime(now, *ltime) >= sec) {
+        *ltime = now;
+        return(1);
+    }
+    else
+        return(0);
+}
+
 /* BATTERY USAGE
  * Linux seems to change the filenames after suspend/hibernate
  * according to a random scheme. So just check for both possibilities.
@@ -147,7 +160,7 @@ getbattery(char *base)
 	remcap = -1;
     using  = -1;
     remaining = -1;
-    stat = "Not Present";
+    stat = "Not Charging";
 
 	co = readfile(base, "present");
 	if (co == NULL || co[0] != '1') {
@@ -157,8 +170,10 @@ getbattery(char *base)
 	free(co);
 
     co = readfile(base, "status");
+    if (co == NULL) {
+        co = "Not Charging";
+    }
     sscanf(co, "%s", &status);
-    free(co);
 
 	co = readfile(base, "charge_full_design");
 	if (co == NULL) {
@@ -203,10 +218,10 @@ getbattery(char *base)
 		return smprintf("invalid");
 
     /* Getting time remaining */
-    if (status == *("Discharging")) {
+    if (status == 'D') {
         remaining = (float)remcap / using;
         stat = "Batt";
-    } else if (status == *("Charging")) {
+    } else if (status == 'C') {
         remaining = ((float)descap - (float)remcap) /using;
         stat = "Char";
     } else {
@@ -324,23 +339,12 @@ gettemperature(char *base, char *sensor)
     return smprintf("%02.0f°C", atof(co) / 1000);
 }
 /* END TEMP STUFF
+ *
+ * =========================
+ * setup the status bar here
  */
-
-int runevery(time_t *ltime, int sec) 
-{
-    time_t now = time(NULL);
-
-    if (difftime(now, *ltime) >= sec) {
-        *ltime = now;
-        return(1);
-    }
-    else
-        return(0);
-}
-
-
 int
-main(void)
+status()
 {
 	char *status = NULL;
 	char *avgs = NULL;
@@ -382,9 +386,23 @@ main(void)
         free(net);
 		setstatus(status);
 	}
-
-	XCloseDisplay(dpy);
-
-	return 0;
+    return 0;
 }
 
+int
+main(int argc, char *argv[])
+{
+    if(argc == 2 && !strcmp("-v", argv[1])) {
+        printf("dwmstatus %s © 2012-2013 William Giokas. See LICENSE for more info.\n",
+                VERSION);
+        return 0;
+    }
+    else if(argc != 1) {
+        printf("usage: dwmstatus [-v]\n");
+        return 1;
+    }
+    else
+        status();
+	XCloseDisplay(dpy);
+    return 0;
+}
