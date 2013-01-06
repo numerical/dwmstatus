@@ -21,7 +21,7 @@
 #define TIMEZONE "America/Chicago"
 
 /* Specify network device, usually wlan0 or eth0 */
-#define NET_DEVICE "wlan0"
+#define NET_DEVICE "wlp3s0"
 
 /* Specity path to your battery */
 #define BATT_PATH "/sys/class/power_supply/BAT0"
