@@ -262,13 +262,13 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 
 	while (fgets(buf, bufsize, devfd)) {
 	    if ((netstart = strstr(buf, netdevice)) != NULL) {
-
-		/* With thanks to the conky project at http://conky.sourceforge.net/ */
-		sscanf(netstart + 6, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
-		       receivedabs, sentabs);
-		fclose(devfd);
-		free(buf);
-		return 0;
+            int netdevlength = sizeof(netdevice) / sizeof(char);
+            /* With thanks to the conky project at http://conky.sourceforge.net/ */
+		    sscanf(netstart + netdevlength, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
+		           receivedabs, sentabs);
+		    fclose(devfd);
+    		free(buf);
+    		return 0;
 	    }
 	}
 	fclose(devfd);
