@@ -4,6 +4,7 @@ include config.mk
 
 SRC = ${NAME}.c
 OBJ = ${SRC:.c=.o}
+DOC = ${NAME}.1
 
 all: options ${NAME}
 
@@ -31,7 +32,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p ${NAME}-${VERSION}
 	@cp -R Makefile config.mk LICENSE \
-		${SRC} ${NAME}-${VERSION}
+		${SRC} ${DOC} ${NAME}-${VERSION}
 	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
 	@gzip ${NAME}-${VERSION}.tar
 	@rm -rf ${NAME}-${VERSION}
@@ -43,14 +44,14 @@ install: all
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/${NAME}
 	@echo installing manual page to ${DESTDIR}${PREFIX}/man1
 	@mkdir -p  ${DESTDIR}${MANPREFIX}/man1
-	@sed "s/VERSION/${VERSION}/g" < dwmstatus.1 > ${DESTDIR}${MANPREFIX}/man1/dwmstatus.1
-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwmstatus.1
+	@sed "s/VERSION/${VERSION}/g" < ${DOC} > ${DESTDIR}${MANPREFIX}/man1/${DOC}
+	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/${DOC}
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/${NAME}
 	@echo removing manual page from ${DESTDIR}${PREFIX}/man1
-	@rm -f ${DESTDIR}${MANPREFIX}/man1/dwmstatus.1
+	@rm -f ${DESTDIR}${MANPREFIX}/man1/${DOC}
 
 
 .PHONY: all options clean dist install uninstall
