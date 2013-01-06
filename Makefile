@@ -5,6 +5,7 @@ include config.mk
 SRC = ${NAME}.c
 OBJ = ${SRC:.c=.o}
 DOC = ${NAME}.1
+CONF= config.h
 
 all: options ${NAME}
 
@@ -32,7 +33,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p ${NAME}-${VERSION}
 	@cp -R Makefile config.mk LICENSE \
-		${SRC} ${DOC} ${NAME}-${VERSION}
+		${SRC} ${DOC} ${CONF} ${NAME}-${VERSION}
 	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
 	@gzip ${NAME}-${VERSION}.tar
 	@rm -rf ${NAME}-${VERSION}

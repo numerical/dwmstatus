@@ -13,22 +13,7 @@
 
 #include <X11/Xlib.h>
 
-/************************
- * Configuration Options
- ************************/
-
-/* Specify your timezone: */
-#define TIMEZONE "America/Chicago"
-
-/* Specify network device, usually wlan0 or eth0 */
-#define NET_DEVICE "wlp3s0"
-
-/* Specity path to your battery */
-#define BATT_PATH "/sys/class/power_supply/BAT0"
-
-/* Specify your temperature sensor information. */
-#define TEMP_SENSOR_PATH "/sys/devices/platform/coretemp.0"
-#define TEMP_SENSOR_UNIT "temp1_input"
+#include "config.h"
 
 static Display *dpy;
 
