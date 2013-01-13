@@ -13,7 +13,16 @@
 
 #include <X11/Xlib.h>
 
+#include <ifaddrs.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <net/if.h>
+
 #include "config.h"
+
+#define NI_NUMERICHOST 1
 
 static Display *dpy;
 
@@ -310,6 +319,51 @@ get_netusage(char *netdevice)
 	return retstr;
 }
 
+char *
+get_ip_addr(const char *interface)
+{
+    static char part[512];
+    socklen_t len = sizeof(struct sockaddr_in);
+    memset(part, 0, sizeof(part));
+    struct ifaddrs *ifaddr, *addrp;
+    bool found = false;
+
+    getifaddrs(&ifaddr);
+
+    if(ifaddr == NULL)
+        return NULL;
+
+    for (addrp = ifaddr;
+            (addrp != NULL &&
+             (strcmp(addrp->ifa_name, interface) != 0 ||
+              addrp->ifa_addr == NULL ||
+              addrp->ifa_addr->sa_family != AF_INET));
+            addrp = addrp->ifa_next) {
+            /* check if interface is down/up */
+                if (strcmp(addrp->ifa_name, interface) != 0)
+                    continue;
+            found = true;
+            if (strcmp(addrp->ifa_name, interface) != 0) {
+                    freeifaddrs(ifaddr);
+                    return NULL;
+                }
+        }
+
+        if (addrp == NULL) {
+                freeifaddrs(ifaddr);
+                return (found ? "no IP" : NULL);
+            }
+
+        int ret;
+    if ((ret = getnameinfo(addrp->ifa_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
+            fprintf(stderr, "dwmstatus: getnameinfo(): %d\n", gai_strerror(ret));
+            freeifaddrs(ifaddr);
+            return "no IP";
+        }
+    freeifaddrs(ifaddr);
+    return part;
+}
+
 /* END NETWORK STUFF
  *
  * TEMPERATURE STUFF
@@ -338,6 +392,7 @@ status()
     char *batt = NULL;
     char *net = NULL;
     char *temp = NULL;
+    char *ipaddr = NULL;
     time_t count60 = 0;
     time_t count10 = 0;
 
@@ -358,17 +413,19 @@ status()
             free(avgs);
             free(batt);
             free(temp);
+            free(ipaddr);
 
 		    avgs   = loadavg();
             batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
+            ipaddr = get_ip_addr(NET_DEVICE);
         }
         /* Update every second */
         net    = get_netusage(NET_DEVICE);
 
         /* Format of display */
-		status = smprintf("%s | %s | [%s] | T: %s | %s",
-				net, batt, avgs, temp, time);
+		status = smprintf("%s (%s) | %s | [%s] | T: %s | %s",
+				net, ipaddr, batt, avgs, temp, time);
         free(net);
 		setstatus(status);
 	}

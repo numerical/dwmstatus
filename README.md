@@ -13,8 +13,8 @@ two motives: learning C and making a good status bar. Now it does a bit more
 than show 3 differently formatted timezones and a 5-10-15 minute system load. I
 added some patches from the site to make it show network speed, temperature and
 a heavily edited battery meter (with time remaining and status) that I threw
-together. Somewhere in the history there's an ip address check, but I'm still
-working on making what I've got up stable. 
+together. I also took some stuff from i3status and put it in here, notably the
+ip address check.
 
 If this thing is of use to you, then I guess I'm doing something right.
 
