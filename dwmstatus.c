@@ -144,8 +144,10 @@ getbattery(char *base)
 {
 	char *co;
     char *stat;
+    char *ret;
     char status;
-	int descap, remcap;
+	int descap;
+    int remcap;
     float remaining;
     float using;
     float voltage;
@@ -169,6 +171,7 @@ getbattery(char *base)
         co = "Not Charging";
     }
     sscanf(co, "%s", &status);
+    free(co);
 
 	co = readfile(base, "charge_full_design");
 	if (co == NULL) {
@@ -195,19 +198,14 @@ getbattery(char *base)
         free(co);
         co = readfile(base, "current_now");
         sscanf(co, "%f", &current);
-        /* Remaining */
+        free(co);
         remcap  = (voltage / 1000.0) * ((float)remcap / 1000.0);
-        /* full design */
         descap  = (voltage / 1000.0) * ((float)descap / 1000.0);
-        /* present rate */
         using = (voltage / 1000.0) * ((float)current / 1000.0);
-        if (co == NULL)
-            return smprintf("");
-    }
-    else
+    } else {
         sscanf(co, "%f", &using);
-    free(co);
-
+        free(co);
+    }
 
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
@@ -231,7 +229,12 @@ getbattery(char *base)
     minutes = seconds / 60;
     seconds -= (minutes *60);
 
-	return smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+    ret = smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+    if(!stat) {
+        free(stat);
+    }
+    return ret;
+
 }
 /* END BATTERY USAGE
  *
@@ -371,12 +374,14 @@ get_ip_addr(const char *interface)
 char *
 gettemperature(char *base, char *sensor)
 {
-    char *co;
+    char *co, *ret;
 
     co = readfile(base, sensor);
     if (co == NULL)
         return smprintf("");
-    return smprintf("%02.0f°C", atof(co) / 1000);
+    ret = smprintf("%02.0f°C", atof(co) / 1000);
+    free(co);
+    return ret;
 }
 /* END TEMP STUFF
  *
@@ -430,6 +435,7 @@ status()
 				net, ipaddr, batt, avgs, temp, time);
         free(net);
 		setstatus(status);
+        free(status);
 	}
     return 0;
 }
