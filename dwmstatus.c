@@ -112,7 +112,8 @@ readfile(char *base, char *file)
 	return smprintf("%s", line);
 }
 
-int runevery(time_t *ltime, int sec)
+int
+runevery(time_t *ltime, int sec)
 {
     time_t now = time(NULL);
 

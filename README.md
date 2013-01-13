@@ -1,0 +1,43 @@
+# dwmstatus
+
+This project is a fork of the suckless project by the same name.
+
+## About
+
+I started using dwm not too long ago, and noticed that there was really no kind
+of nice, clean status implementation. All of them were in Python or some shell
+language. Then I looked at the dwm site and there was suddenly this new
+dwmstatus project up there. By default it just showed systemd load and time,
+and coming from i3 I was expecting a bit more. So I started editing this with
+two motives: learning C and making a good status bar. Now it does a bit more
+than show 3 differently formatted timezones and a 5-10-15 minute system load. I
+added some patches from the site to make it show network speed, temperature and
+a heavily edited battery meter (with time remaining and status) that I threw
+together. Somewhere in the history there's an ip address check, but I'm still
+working on making what I've got up stable. 
+
+If this thing is of use to you, then I guess I'm doing something right.
+
+## Instalation and Use
+
+This compiles fine with both clang and gcc for me. Note, it does have most of
+the same makedepends as dwm.
+
+Running `make` will compile dwmstatus and you can run it as you would any C
+program, `./dwmstatus`. There is documentation on how to run it in the man page.
+Just as dwm is configured with a `config.h` file, so is this status bar. There
+are a few things you can do just editing this config file, like setting
+location, where your battery is located, etc. To edit the order that things are
+displayed, you will have to edit dwmstatus.c's `status()` function.
+
+If you're on Arch, then there is a package on the aur, `dwmstatus-ks`, that you
+can use. Change a few things and you can use it with the git repository as well.
+
+## Bugs
+
+Please add bugs to the bitbucket project or email me at 1007380 [at] gmail [Ðot]
+com. 
+
+## Copyright Info
+
+See LICENSE.
