@@ -413,7 +413,9 @@ status()
             free(avgs);
             free(batt);
             free(temp);
-            free(ipaddr);
+            if(!ipaddr) {
+                free(ipaddr);
+            }
 
 		    avgs   = loadavg();
             batt   = getbattery(BATT_PATH);
