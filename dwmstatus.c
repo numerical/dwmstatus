@@ -213,13 +213,13 @@ getbattery(char *base)
     /* Getting time remaining */
     if (status == 'D') {
         remaining = (float)remcap / using;
-        stat = "Batt";
+        stat = "B";
     } else if (status == 'C') {
         remaining = ((float)descap - (float)remcap) /using;
-        stat = "Char";
+        stat = "C";
     } else {
         remaining = 0;
-        stat = "Full";
+        stat = "F";
     }
     /* convert to hour:min:sec */
     int hours, seconds, minutes, secs_rem;
@@ -303,19 +303,19 @@ get_netusage(char *netdevice)
     downspeed = (newrec - oldrec) / 1024.0;
     if (downspeed > 1024.0) {
         downspeed /= 1024.0;
-        sprintf(downspeedstr, "%.3f MB/s", downspeed);
+        sprintf(downspeedstr, "%.3fMB/s", downspeed);
     } else {
-        sprintf(downspeedstr, "%.2f KB/s", downspeed);
+        sprintf(downspeedstr, "%.2fKB/s", downspeed);
     }
 
     upspeed = (newsent - oldsent) / 1024.0;
     if (upspeed > 1024.0) {
         upspeed /= 1024.0;
-        sprintf(upspeedstr, "%.3f MB/s", upspeed);
+        sprintf(upspeedstr, "%.3fMB/s", upspeed);
     } else {
-        sprintf(upspeedstr, "%.2f KB/s", upspeed);
+        sprintf(upspeedstr, "%.2fKB/s", upspeed);
     }
-    sprintf(retstr, "%s: d: %s u: %s", netdevice, downspeedstr, upspeedstr);
+    sprintf(retstr, "%s d %s u %s", netdevice, downspeedstr, upspeedstr);
 
     free(downspeedstr);
     free(upspeedstr);
@@ -431,7 +431,7 @@ status()
         net    = get_netusage(NET_DEVICE);
 
         /* Format of display */
-        status = smprintf("%s (%s) | %s | [%s] | T: %s | %s",
+        status = smprintf("%s (%s) | %s [%s] T %s | %s",
                 net, ipaddr, batt, avgs, temp, time);
         free(net);
         setstatus(status);
