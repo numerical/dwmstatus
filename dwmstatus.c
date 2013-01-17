@@ -24,6 +24,15 @@
 
 #define NI_NUMERICHOST 1
 
+/* Some function declarations that don't seem to be in the header files */
+const char
+*gai_strerror(int errcode);
+
+int
+getnameinfo(const struct sockaddr *sa, socklen_t salen,
+        char *host, size_t hostlen,
+        char *serv, size_t servlen, int flags);
+
 static Display *dpy;
 
 char *
@@ -110,12 +119,16 @@ readfile(char *base, char *file)
 
     path = smprintf("%s/%s", base, file);
     fd = fopen(path, "r");
-    if (fd == NULL)
+    if (fd == NULL) {
+        free(path);
         return NULL;
+    }
     free(path);
 
-    if (fgets(line, sizeof(line)-1, fd) == NULL)
+    if (fgets(line, sizeof(line)-1, fd) == NULL) {
+        fclose(fd);
         return NULL;
+    }
     fclose(fd);
 
     return smprintf("%s", line);
@@ -230,9 +243,7 @@ getbattery(char *base)
     seconds -= (minutes *60);
 
     ret = smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
-    if(!stat) {
-        free(stat);
-    }
+    if(!stat) { free(stat); }
     return ret;
 
 }
@@ -247,6 +258,7 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 {
     char *buf;
     char *netstart;
+    int netdevlength;
     static int bufsize;
     FILE *devfd;
 
@@ -260,7 +272,7 @@ parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentab
 
     while (fgets(buf, bufsize, devfd)) {
         if ((netstart = strstr(buf, netdevice)) != NULL) {
-            int netdevlength = sizeof(netdevice) / sizeof(char);
+            netdevlength = sizeof(netdevice) / sizeof(char);
             /* With thanks to the conky project at http://conky.sourceforge.net/ */
             sscanf(netstart + netdevlength, "%llu  %*d     %*d  %*d  %*d  %*d   %*d        %*d       %llu",\
                    receivedabs, sentabs);
@@ -279,13 +291,10 @@ get_netusage(char *netdevice)
 {
     unsigned long long int oldrec, oldsent, newrec, newsent;
     double downspeed, upspeed;
-    char *downspeedstr, *upspeedstr;
+    char *downspeedstr = NULL;
+    char *upspeedstr = NULL;
     char *retstr;
     int retval;
-
-    downspeedstr = (char *) malloc(15);
-    upspeedstr = (char *) malloc(15);
-    retstr = (char *) malloc(42);
 
     retval = parse_netdev(&oldrec, &oldsent, netdevice);
     if (retval) {
@@ -299,6 +308,10 @@ get_netusage(char *netdevice)
         fprintf(stdout, "Error when parsing /proc/net/dev file.\n");
         exit(1);
     }
+
+    downspeedstr = (char *) malloc(15);
+    upspeedstr = (char *) malloc(15);
+    retstr = (char *) malloc(42);
 
     downspeed = (newrec - oldrec) / 1024.0;
     if (downspeed > 1024.0) {
@@ -315,7 +328,7 @@ get_netusage(char *netdevice)
     } else {
         sprintf(upspeedstr, "%.2fKB/s", upspeed);
     }
-    sprintf(retstr, "%s d %s u %s", netdevice, downspeedstr, upspeedstr);
+    sprintf(retstr, "%s: d %s u %s", netdevice, downspeedstr, upspeedstr);
 
     free(downspeedstr);
     free(upspeedstr);
@@ -359,7 +372,7 @@ get_ip_addr(const char *interface)
 
         int ret;
     if ((ret = getnameinfo(addrp->ifa_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
-            fprintf(stderr, "dwmstatus: getnameinfo(): %d\n", gai_strerror(ret));
+            fprintf(stderr, "dwmstatus: getnameinfo(): %s\n", gai_strerror(ret));
             freeifaddrs(ifaddr);
             return "no IP";
         }
@@ -377,10 +390,13 @@ gettemperature(char *base, char *sensor)
     char *co, *ret;
 
     co = readfile(base, sensor);
-    if (co == NULL)
+    if (co == NULL) {
+        free(co);
         return smprintf("");
-    ret = smprintf("%02.0f°C", atof(co) / 1000);
+    }
+    double temp = atof(co);
     free(co);
+    ret = smprintf("%02.0f°C", temp / 1000);
     return ret;
 }
 /* END TEMP STUFF
@@ -398,6 +414,7 @@ status()
     char *net = NULL;
     char *temp = NULL;
     char *ipaddr = NULL;
+    char *net_device_up = NET_DEVICE_PRIMARY;
     time_t count60 = 0;
     time_t count10 = 0;
 
@@ -418,17 +435,16 @@ status()
             free(avgs);
             free(batt);
             free(temp);
-            if(!ipaddr) {
-                free(ipaddr);
-            }
+            if(!ipaddr) { free(ipaddr); }
 
             avgs   = loadavg();
             batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
-            ipaddr = get_ip_addr(NET_DEVICE);
+            ipaddr = get_ip_addr(net_device_up);
+            if(!temp) { free(temp); }
         }
         /* Update every second */
-        net    = get_netusage(NET_DEVICE);
+        net    = get_netusage(net_device_up);
 
         /* Format of display */
         status = smprintf("%s (%s) | %s [%s] T %s | %s",
