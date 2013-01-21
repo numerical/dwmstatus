@@ -435,20 +435,20 @@ status()
             free(avgs);
             free(batt);
             free(temp);
-            if(!ipaddr) { free(ipaddr); }
 
             avgs   = loadavg();
             batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
-            ipaddr = get_ip_addr(net_device_up);
             if(!temp) { free(temp); }
         }
         /* Update every second */
         net    = get_netusage(net_device_up);
+        ipaddr = get_ip_addr(net_device_up);
 
         /* Format of display */
         status = smprintf("%s (%s) | %s [%s] T %s | %s",
                 net, ipaddr, batt, avgs, temp, time);
+        if(!ipaddr) { free(ipaddr); }
         free(net);
         setstatus(status);
         free(status);
