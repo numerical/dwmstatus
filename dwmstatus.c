@@ -242,11 +242,14 @@ getbattery(char *base)
     minutes = seconds / 60;
     seconds -= (minutes *60);
 
-    ret = smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+    if (seconds < 0 || minutes < 0 || hours < 0)
+        ret = smprintf("%s: Calculating...", stat);
+    else
+        ret = smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
     if(!stat) { free(stat); }
     return ret;
-
 }
+
 /* END BATTERY USAGE
  *
  * NETWORK STUFF
@@ -405,7 +408,7 @@ gettemperature(char *base, char *sensor)
  * setup the status bar here
  */
 int
-status()
+status(int tostatusbar)
 {
     char *status = NULL;
     char *avgs = NULL;
@@ -418,12 +421,12 @@ status()
     time_t count60 = 0;
     time_t count10 = 0;
 
-    if (!(dpy = XOpenDisplay(NULL))) {
+    if (!(dpy = XOpenDisplay(NULL)) && tostatusbar == 0) {
         fprintf(stderr, "dwmstatus: cannot open display.\n");
         return 1;
     }
 
-    for (;;sleep(1)) {
+    for (;;sleep(0)) {
         /* Update every minute */
         if (runevery(&count60, 60)) {
             free(time);
@@ -439,7 +442,7 @@ status()
             avgs   = loadavg();
             batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
-            if(!temp) { free(temp); }
+            if(!temp) free(temp);
         }
         /* Update every second */
         net    = get_netusage(net_device_up);
@@ -448,9 +451,14 @@ status()
         /* Format of display */
         status = smprintf("%s (%s) | %s [%s] T %s | %s",
                 net, ipaddr, batt, avgs, temp, time);
-        if(!ipaddr) { free(ipaddr); }
+        if(!ipaddr) free(ipaddr);
         free(net);
-        setstatus(status);
+
+        if(tostatusbar == 0)
+            setstatus(status);
+        else
+            puts(status);
+
         free(status);
     }
     return 0;
@@ -464,12 +472,16 @@ main(int argc, char *argv[])
                 VERSION);
         return 0;
     }
+    else if(argc == 2 && !strcmp("-o", argv[1])) {
+        status(1);
+        return 0;
+    }
     else if(argc != 1) {
-        printf("usage: dwmstatus [-v]\n");
+        printf("usage: dwmstatus [-v] [-o]\n");
         return 1;
     }
     else
-        status();
+        status(0);
     XCloseDisplay(dpy);
     return 0;
 }

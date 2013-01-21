@@ -1,13 +1,15 @@
 .TH DWMSTATUS 1 dwmstatus\-VERSION
 .SH NAME
-dwmstatus \- simple status bar for dwm
+dwmstatus \- simple status bar
 .SH SYNOPSIS
 .B dwmstatus
-.RB [ \-v ]
+.RB [ \-vo ]
 .SH DESCRIPTION
-dwmstatus is a simple, small status bar for dwm. Unlike large, complex shell
-scripts, this status bar tries to stay clean and concise, has no configuration
-file, and must be recompiled to change settings, similar to dwm. 
+dwmstatus is a simple, small status bar originally for dwm. Unlike large,
+complex shell scripts, this status bar tries to stay clean and concise, has no
+configuration file, and must be recompiled to change settings, similar to dwm.
+It can output to the dwm statusbar (set the xroot label) or to stdout for use
+with other status bars or programs. 
 .P
 The default setup has 5 sections (from left to right): network usage, battery
 status, computer load, temperature, and time. These are separated by pipes, and
@@ -19,6 +21,8 @@ system information is located and recompile.
 .TP
 .B \-v
 Prints version information to stdout then exits with status 0
+.B \-o
+Print status to stdout instead of updating the status bar
 .SH USAGE
 .TP
 Run dwbstatus in a shell and it will put its output into the dwm status bar
