@@ -12,6 +12,14 @@
 
 #define NI_NUMERICHOST 1
 
+const char
+*gai_strerror(int errcode);
+
+int
+getnameinfo(const struct sockaddr *sa, socklen_t salen,
+        char *host, size_t hostlen,
+        char *serv, size_t servlen, int flags);
+
 int 
 parse_netdev(unsigned long long int *receivedabs, unsigned long long int *sentabs, char *netdevice)
 {
