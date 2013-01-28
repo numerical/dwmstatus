@@ -31,12 +31,8 @@ clean:
 
 dist: clean
 	@echo creating dist tarball
-	@mkdir -p ${NAME}-${VERSION}
-	@cp -R Makefile config.mk LICENSE \
-		${SRC} ${DOC} ${CONF} include/ README.md ${NAME}-${VERSION}
-	@tar -cf ${NAME}-${VERSION}.tar ${NAME}-${VERSION}
-	@gzip ${NAME}-${VERSION}.tar
-	@rm -rf ${NAME}-${VERSION}
+	@mkdir -p dist
+	@git archive -o dist/${NAME}-${VERSION}.tar.gz --prefix="${NAME}-${VERSION}/" -9 v${VERSION}
 
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin

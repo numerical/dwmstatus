@@ -2,5 +2,6 @@
 *.swp
 *.o
 bin/
+dist/
 dwmstatus
 *.gz
