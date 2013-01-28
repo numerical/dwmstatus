@@ -12,10 +12,10 @@ getbattery(char *base)
     char status;
     int descap;
     int remcap;
-    float remaining;
-    float using;
-    float voltage;
-    float current;
+    double remaining;
+    double using;
+    double voltage;
+    double current;
 
     descap = -1;
     remcap = -1;
@@ -58,16 +58,16 @@ getbattery(char *base)
     co = readfile(base, "power_now"); /* µWattage being used */
     if (co == NULL) {
         co = readfile(base, "voltage_now");
-        sscanf(co, "%f", &voltage);
+        sscanf(co, "%lf", &voltage);
         free(co);
         co = readfile(base, "current_now");
-        sscanf(co, "%f", &current);
+        sscanf(co, "%lf", &current);
         free(co);
-        remcap  = (voltage / 1000.0) * ((float)remcap / 1000.0);
-        descap  = (voltage / 1000.0) * ((float)descap / 1000.0);
-        using = (voltage / 1000.0) * ((float)current / 1000.0);
+        remcap  = (voltage / 1000.0) * ((double)remcap / 1000.0);
+        descap  = (voltage / 1000.0) * ((double)descap / 1000.0);
+        using = (voltage / 1000.0) * ((double)current / 1000.0);
     } else {
-        sscanf(co, "%f", &using);
+        sscanf(co, "%lf", &using);
         free(co);
     }
 
@@ -76,10 +76,10 @@ getbattery(char *base)
 
     /* Getting time remaining */
     if (status == 'D') {
-        remaining = (float)remcap / using;
+        remaining = (double)remcap / using;
         stat = "B";
     } else if (status == 'C') {
-        remaining = ((float)descap - (float)remcap) /using;
+        remaining = ((double)descap - (double)remcap) /using;
         stat = "C";
     } else {
         remaining = 0;
@@ -96,7 +96,7 @@ getbattery(char *base)
     if (seconds < 0 || minutes < 0 || hours < 0)
         ret = smprintf("%s: Calculating...", stat);
     else
-        ret = smprintf("%s: %.2f%% %02d:%02d:%02d", stat, (((float)remcap / (float)descap) * 100), hours, minutes, seconds);
+        ret = smprintf("%s: %.2lf%% %02d:%02d:%02d", stat, (((double)remcap / (double)descap) * 100), hours, minutes, seconds);
     if(!stat) { free(stat); }
     return ret;
 }

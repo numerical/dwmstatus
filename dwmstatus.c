@@ -50,12 +50,12 @@ status(int tostatusbar)
         /* Update every 10 seconds */
         if (runevery(&count10, 10)) {
             free(avgs);
-            free(batt);
             free(temp);
+            free(batt);
 
             avgs   = loadavg();
-            batt   = getbattery(BATT_PATH);
             temp   = gettemperature(TEMP_SENSOR_PATH, TEMP_SENSOR_UNIT);
+            batt   = getbattery(BATT_PATH);
             if(!temp) free(temp);
         }
         /* Update every second */
