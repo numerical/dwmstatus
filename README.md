@@ -31,7 +31,7 @@ location, where your battery is located, etc. To edit the order that things are
 displayed, you will have to edit dwmstatus.c's `status()` function.
 
 You can also add functions by placing them in the includes folder and adding a
-`#includes "includes/yourfile.c"` in the `dwmstatus.c` file.
+`#include "includes/yourfile.c"` in the `dwmstatus.c` file.
 
 If you're on Arch, then there are packages on the aur, `dwmstatus-ks` and
 `dwmstatus-ks-git`, that you can use to build the status bar.
