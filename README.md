@@ -18,7 +18,7 @@ ip address check.
 
 If this thing is of use to you, then I guess I'm doing something right.
 
-## Instalation and Use
+## Installation and Use
 
 This compiles fine with both clang and gcc for me. Note, it does have most of
 the same makedepends as dwm.
