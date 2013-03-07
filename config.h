@@ -5,14 +5,14 @@
  ************************/
 
 /* Specify your timezone: */
-#define TIMEZONE "America/Chicago"
+#define TIMEZONE "America/New_York"
 
 /* Specify network device, usually wlan0 or eth0
  * systemd has some new naming conventions you can turn on with longer names.
  */
-#define NET_DEVICE_PRIMARY "wlp3s0"
-/* Currently not of any use 
-#define NET_DEVICE_SECONDARY "enp0s25" */
+#define NET_DEVICE_PRIMARY "wlan0"
+/* Currently not of any use  */
+#define NET_DEVICE_SECONDARY "eth0"
 
 /* Specity path to your battery */
 #define BATT_PATH "/sys/class/power_supply/BAT0"

@@ -2,7 +2,6 @@ NAME = dwmstatus
 VERSION = 0.4.0
 
 # Customize below to fit your system
-
 # paths
 PREFIX = /usr
 MANPREFIX = ${PREFIX}/share/man
